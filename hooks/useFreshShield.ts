@@ -123,7 +123,7 @@ export function useFreshShield() {
       acceptStatus(await setPicoTarget(ipRef.current, targetTemperature));
       return true;
     } catch (cause) {
-      setConnected(false);
+      // Keep the last Pico-confirmed target visible and allow the user to retry.
       setError(messageFor(cause));
       return false;
     } finally {

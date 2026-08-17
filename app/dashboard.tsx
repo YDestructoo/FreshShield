@@ -40,7 +40,7 @@ function Wave({ actual, target }: { actual: number; target: number }) {
 
 export default function DashboardScreen() {
   const { ip, status, connected, error, lastUpdated, updatingTarget, changeTargetTemperature } = useFreshShield();
-  const [targetTemperature, setTargetTemperature] = useState(0);
+  const [selectedTarget, setSelectedTarget] = useState(0);
   const [readings, setReadings] = useState<Reading[]>([]);
   const temperatureTimeline = useMemo(() => averageReadings(readings, 'temperature', 15 * 60_000, 12), [readings]);
   const chartData = temperatureTimeline.length ? temperatureTimeline : status ? [{ timestamp: Date.now(), value: status.temperature }] : [];
@@ -48,7 +48,7 @@ export default function DashboardScreen() {
   const humidityAverage = humidityTrend.at(-1) ?? status?.humidity ?? 0;
 
   useEffect(() => {
-    if (status) setTargetTemperature(status.targetTemperature);
+    if (status) setSelectedTarget(status.targetTemperature);
   }, [status?.targetTemperature]);
 
   useEffect(() => {
@@ -62,7 +62,6 @@ export default function DashboardScreen() {
         <View className="flex-row items-center justify-between px-1">
           <View>
             <Text className="font-poppins text-xs text-[#657178]">FreshShield</Text>
-            <Text className="font-poppins text-2xl font-semibold tracking-[-0.8px] text-[#111719]">Good morning</Text>
           </View>
           <ConnectionStatus connected={connected} />
         </View>
@@ -96,9 +95,9 @@ export default function DashboardScreen() {
             <TemperatureControl
               applying={updatingTarget}
               disabled={!connected}
-              onApply={() => void changeTargetTemperature(targetTemperature)}
-              onChange={setTargetTemperature}
-              value={targetTemperature}
+              onApply={() => void changeTargetTemperature(selectedTarget)}
+              onChange={setSelectedTarget}
+              value={selectedTarget}
             />
 
             <View className="flex-row gap-3">
