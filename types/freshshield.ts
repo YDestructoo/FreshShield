@@ -1,9 +1,7 @@
-export type DeviceMode = 'APP' | 'STOCK';
-
 export type PicoStatus = {
   temperature: number;
   humidity: number;
-  gas: number;
+  gasLevel: number;
   targetTemperature: number;
-  mode: DeviceMode;
+  isStockMode: boolean;
 };
