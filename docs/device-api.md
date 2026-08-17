@@ -6,7 +6,7 @@ For a physical Pico, set `EXPO_PUBLIC_DEMO_MODE=false` in `.env.local`, then res
 
 ## Polling
 
-The app requests the current device state every 5 seconds while a device address is configured:
+The app requests the current device state every 2 seconds while a device address is configured:
 
 ```http
 GET http://<pico-address>/

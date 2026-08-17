@@ -4,13 +4,15 @@ import { Poppins_400Regular, useFonts } from '@expo-google-fonts/poppins';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { StatusBar } from 'expo-status-bar';
 
+import { FreshShieldProvider } from '../hooks/useFreshShield';
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Poppins_400Regular });
 
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <FreshShieldProvider>
       <StatusBar style="dark" />
       <NativeTabs
         backgroundColor="transparent"
@@ -30,6 +32,6 @@ export default function RootLayout() {
           <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>
-    </>
+    </FreshShieldProvider>
   );
 }

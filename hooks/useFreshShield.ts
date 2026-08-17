@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, createElement, type PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import { POLL_INTERVAL_MS } from '../constants/config';
 import { getPicoStatus, setPicoTarget } from '../services/pico';
@@ -6,7 +6,7 @@ import { getPicoIp, setPicoIp } from '../storage/settings';
 import type { PicoStatus } from '../types/freshshield';
 
 const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
-const DEMO_INTERVAL_MS = 1_000;
+const DEMO_INTERVAL_MS = 2_000;
 const DEMO_STATUS: PicoStatus = { temperature: 3.8, humidity: 76.4, gasLevel: 142, targetTemperature: 4, isStockMode: false };
 
 const getDemoStatus = (targetTemperature = DEMO_STATUS.targetTemperature): PicoStatus => {
@@ -27,7 +27,7 @@ const messageFor = (error: unknown) =>
       ? error.message
       : 'Unable to reach the Pico W.';
 
-export function useFreshShield() {
+function useFreshShieldState() {
   const [ip, setIp] = useState<string | null>(DEMO_MODE ? 'Demo device' : null);
   const [status, setStatus] = useState<PicoStatus | null>(DEMO_MODE ? DEMO_STATUS : null);
   const [connected, setConnected] = useState(DEMO_MODE);
@@ -64,7 +64,6 @@ export function useFreshShield() {
   useEffect(() => {
     if (DEMO_MODE) {
       ipRef.current = 'Demo device';
-      setIp('Demo device');
       acceptStatus(DEMO_STATUS);
       return;
     }
@@ -83,7 +82,7 @@ export function useFreshShield() {
 
   const connect = useCallback(async (nextIp: string) => {
     if (DEMO_MODE) {
-      acceptStatus(DEMO_STATUS);
+      acceptStatus(getDemoStatus(demoTargetRef.current));
       return true;
     }
     const value = nextIp.trim();
@@ -97,8 +96,8 @@ export function useFreshShield() {
     try {
       const nextStatus = await getPicoStatus(value);
       ipRef.current = value;
-      setIp(value);
       acceptStatus(nextStatus);
+      setIp(value);
       await setPicoIp(value);
       return true;
     } catch (cause) {
@@ -123,7 +122,6 @@ export function useFreshShield() {
       acceptStatus(await setPicoTarget(ipRef.current, targetTemperature));
       return true;
     } catch (cause) {
-      // Keep the last Pico-confirmed target visible and allow the user to retry.
       setError(messageFor(cause));
       return false;
     } finally {
@@ -132,4 +130,16 @@ export function useFreshShield() {
   }, [acceptStatus, connected]);
 
   return { ip, status, connected, connecting, updatingTarget, error, lastUpdated, connect, refresh, changeTargetTemperature };
+}
+
+const FreshShieldContext = createContext<ReturnType<typeof useFreshShieldState> | null>(null);
+
+export function FreshShieldProvider({ children }: PropsWithChildren) {
+  return createElement(FreshShieldContext.Provider, { value: useFreshShieldState() }, children);
+}
+
+export function useFreshShield() {
+  const state = useContext(FreshShieldContext);
+  if (!state) throw new Error('useFreshShield must be used inside FreshShieldProvider.');
+  return state;
 }
