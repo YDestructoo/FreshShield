@@ -5,6 +5,9 @@ import { getPicoStatus, setPicoTarget } from '../services/pico';
 import { getPicoIp, setPicoIp } from '../storage/settings';
 import type { PicoStatus } from '../types/freshshield';
 
+const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
+const DEMO_STATUS: PicoStatus = { temperature: 3.8, humidity: 76.4, gasLevel: 142, targetTemperature: 4, isStockMode: false };
+
 const messageFor = (error: unknown) =>
   error instanceof Error && error.name === 'AbortError'
     ? 'The Pico W request timed out.'
@@ -13,13 +16,13 @@ const messageFor = (error: unknown) =>
       : 'Unable to reach the Pico W.';
 
 export function useFreshShield() {
-  const [ip, setIp] = useState<string | null>(null);
-  const [status, setStatus] = useState<PicoStatus | null>(null);
-  const [connected, setConnected] = useState(false);
+  const [ip, setIp] = useState<string | null>(DEMO_MODE ? 'Demo device' : null);
+  const [status, setStatus] = useState<PicoStatus | null>(DEMO_MODE ? DEMO_STATUS : null);
+  const [connected, setConnected] = useState(DEMO_MODE);
   const [connecting, setConnecting] = useState(false);
   const [updatingTarget, setUpdatingTarget] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(DEMO_MODE ? new Date() : null);
   const ipRef = useRef<string | null>(null);
 
   const acceptStatus = useCallback((nextStatus: PicoStatus) => {
@@ -30,6 +33,10 @@ export function useFreshShield() {
   }, []);
 
   const refresh = useCallback(async () => {
+    if (DEMO_MODE) {
+      acceptStatus(DEMO_STATUS);
+      return true;
+    }
     if (!ipRef.current) return false;
     try {
       acceptStatus(await getPicoStatus(ipRef.current));
@@ -42,11 +49,17 @@ export function useFreshShield() {
   }, [acceptStatus]);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      ipRef.current = 'Demo device';
+      setIp('Demo device');
+      acceptStatus(DEMO_STATUS);
+      return;
+    }
     void getPicoIp().then((savedIp) => {
       ipRef.current = savedIp;
       setIp(savedIp);
     }).catch(() => setError('Could not load the saved Pico W IP address.'));
-  }, []);
+  }, [acceptStatus]);
 
   useEffect(() => {
     if (!ip) return;
@@ -56,6 +69,10 @@ export function useFreshShield() {
   }, [ip, refresh]);
 
   const connect = useCallback(async (nextIp: string) => {
+    if (DEMO_MODE) {
+      acceptStatus(DEMO_STATUS);
+      return true;
+    }
     const value = nextIp.trim();
     if (!value) {
       setError('Enter the Pico W IP address.');
@@ -81,6 +98,11 @@ export function useFreshShield() {
   }, [acceptStatus]);
 
   const changeTargetTemperature = useCallback(async (targetTemperature: number) => {
+    if (DEMO_MODE) {
+      setStatus((current) => ({ ...(current ?? DEMO_STATUS), targetTemperature }));
+      setLastUpdated(new Date());
+      return true;
+    }
     if (!ipRef.current || !connected) return false;
 
     setUpdatingTarget(true);

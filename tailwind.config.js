@@ -2,6 +2,6 @@
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
-  theme: { extend: {} },
+  theme: { extend: { fontFamily: { poppins: ['Poppins_400Regular'] } } },
   plugins: [],
 };
