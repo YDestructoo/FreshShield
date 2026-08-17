@@ -1,440 +1,72 @@
-# FreshShield Mobile App Architecture
+# FreshShield Mobile App
 
-## 1. Overview
+FreshShield is a local-first Expo mobile app for monitoring and setting the cooling target of a Raspberry Pi Pico W. It has no cloud service, account system, or remote database.
 
-FreshShield is a local-first mobile application that monitors and controls the existing FreshShield Raspberry Pi Pico W system.
-
-The Pico W remains responsible for the actual hardware control. The mobile app acts as the user interface for:
-
-- viewing live temperature,
-- viewing humidity,
-- viewing air-quality/gas sensor data,
-- viewing the current target temperature,
-- changing the target temperature,
-- showing whether the device is connected,
-- showing whether the Pico is in APP mode or stock/automatic mode,
-
-No cloud backend, authentication system, or remote database is required.
-
----
-
-## 2. System Architecture
+## Architecture
 
 ```text
-┌───────────────────────────────┐
-│      FreshShield Mobile       │
-│      Expo + React Native      │
-│                               │
-│  Connect                      │
-│  Dashboard                    │
-│  Settings                     │
-│                               │
-│  AsyncStorage (Pico IP)       │
-└───────────────┬───────────────┘
-                │
-          HTTP + JSON
-          Local Wi-Fi
-                │
-                ▼
-┌───────────────────────────────┐
-│      Raspberry Pi Pico W      │
-│         MicroPython           │
-│                               │
-│  GET /                        │
-│  POST /set_target             │
-│                               │
-│  Sensor Reading               │
-│  Temperature Control Loop     │
-│  Stock Mode Fallback          │
-└───────────────┬───────────────┘
-                │
-        ┌───────┴────────┐
-        ▼                ▼
-      Sensors          BTS7960
-   DHT22 / MQ135          │
-                          ▼
-                       Peltier
+Expo / React Native app
+  ├─ Dashboard: current readings, target control, session charts
+  ├─ Settings: Pico W address
+  ├─ AsyncStorage: saved address only
+  └─ HTTP + JSON over local Wi-Fi
+              │
+              ▼
+Raspberry Pi Pico W
+  ├─ Sensors: DHT22 and MQ135
+  ├─ Control: BTS7960 and Peltier
+  ├─ GET /
+  └─ POST /set_target
 ```
 
----
+The Pico W owns all hardware control and fallback behavior. The app only presents readings and sends the target temperature; it never drives the Peltier directly.
 
-## 3. Tech Stack
+## App behavior
 
-### Mobile App
+- The device address is entered in **Settings** and saved locally after a successful connection.
+- A shared `FreshShieldProvider` keeps one device state for the Dashboard and Settings tabs.
+- While an address is configured, the app fetches device status immediately and then every 2 seconds.
+- A failed request marks the device disconnected and shows an error. Requests time out after 5 seconds.
+- Applying a target sends it to the Pico W and displays the status returned by the Pico as the source of truth.
+- `EXPO_PUBLIC_DEMO_MODE=true` uses a simulated local device for development. Set it to `false` to use hardware, then restart Expo.
 
-- Expo
-- React Native
-- TypeScript
-- Expo Router
-- NativeWind
-- AsyncStorage
-- Built-in `fetch()`
-- `@expo/vector-icons`
-
-
-### Existing Hardware
-
-- Raspberry Pi Pico W
-- DHT22
-- MQ135
-- BTS7960
-- Peltier module
-- SSD1306 OLED
-
-No hardware changes are required.
-
----
-
-## 4. App Responsibilities
-
-The mobile app should:
-
-1. Connect to the Pico W using its local IP address.
-2. Save the Pico IP locally.
-3. Poll the Pico for live device data.
-4. Display:
-   - temperature,
-   - humidity,
-   - gas/air-quality reading,
-   - target temperature,
-   - connection state,
-   - stock/app mode.
-5. Allow the user to set a new target temperature.
-6. Keep the app-control heartbeat active while connected.
-7. Handle connection failures without crashing.
-
-The app must not directly control the Peltier or recreate the Pico control algorithm.
-
----
-
-## 5. Pico W Responsibilities
-
-The Pico W should remain responsible for:
-
-- reading the DHT22,
-- reading the MQ135,
-- controlling the Peltier,
-- calculating output power,
-- running the control loop,
-- exposing the local HTTP API,
-- reverting to stock mode when the app stops communicating,
-- displaying device information on the OLED.
-
----
-
-## 6. API
-
-### GET `/`
-
-Fetch the current FreshShield status.
-
-Example response:
-
-```json
-{
-  "status": "ok",
-  "temperature": 24.5,
-  "humidity": 55.2,
-  "gas_level_raw": 12500,
-  "target_temp": 22.0,
-  "is_stock_mode": false
-}
-```
-
----
-
-### POST `/set_target`
-
-Set the desired target temperature.
-
-Request:
-
-```json
-{
-  "target_temp": 22.5
-}
-```
-
-Example flow:
-
-```text
-User changes target
-        │
-        ▼
-FreshShield App
-        │
- POST /set_target
-        │
-        ▼
-      Pico W
-        │
-        ▼
-Existing control loop
-        │
-        ▼
-      Peltier
-```
-
----
-
-## 7. Polling and Heartbeat
-
-The Pico W returns to its stock temperature profile if it does not receive an app request for 60 seconds.
-
-Recommended app behavior:
-
-```text
-Connected
-   │
-   ├── GET / every ~5 seconds
-   │
-   ├── Update device state
-   │
-   └── Keep APP mode active
-```
-
-If communication fails:
-
-```text
-Request fails
-   │
-   ▼
-Set app state to Disconnected
-   │
-   ▼
-Stop assuming app control
-   │
-   ▼
-Pico handles fallback itself
-```
-
-The app should never show the device as actively controlled if requests are failing.
-
----
-
-## 8. Screens
-
-### Connect
-
-Used for initial device connection.
-
-Contains:
-
-- FreshShield name/logo
-- Pico IP address input
-- Connect button
-- connection status
-
-The IP should be stored locally after a successful connection.
-
----
+## Screens
 
 ### Dashboard
 
-Main app screen.
+- Connection state and last-update time
+- Current temperature and difference from the target
+- Target-temperature controls
+- Humidity (5-minute session average), raw gas reading, and current target
+- Interactive temperature timeline using 15-minute session averages
 
-Displays:
-
-- connection status,
-- current temperature,
-- humidity,
-- air-quality/gas value,
-- current target temperature,
-- APP/stock mode.
-
-Controls:
-
-- decrease target temperature,
-- increase target temperature,
-- apply target temperature.
-
-Optional:
-
-- temperature presets.
-
----
-
----
+Chart readings stay in memory and are discarded when the app restarts.
 
 ### Settings
 
-Contains:
+- Pico W address input (`host` or `host:port`)
+- Save-and-reconnect action
+- Local-network-only notice
 
-- current Pico IP,
-- reconnect/change IP,
-- auto-reconnect option,
-- temperature alert preferences,
-- app version/about section.
-
----
-
-## 9. Recommended Project Structure
+## Code layout
 
 ```text
-freshshield/
-├── app/
-│   ├── _layout.tsx
-│   ├── index.tsx
-│   ├── dashboard.tsx
-│   └── settings.tsx
-│
-├── components/
-│   ├── SensorCard.tsx
-│   ├── ConnectionStatus.tsx
-│   ├── TemperatureControl.tsx
-│   └── ScreenContainer.tsx
-│
-├── hooks/
-│   └── useFreshShield.ts
-│
-├── services/
-│   └── pico.ts
-│
-├── storage/
-│   └── settings.ts
-│
-├── types/
-│   └── freshshield.ts
-│
-├── constants/
-│   └── config.ts
-│
-└── assets/
+app/
+  _layout.tsx       # shared provider and native tabs
+  dashboard.tsx     # monitoring and charts
+  settings.tsx      # device connection
+components/         # reusable dashboard UI
+hooks/useFreshShield.ts  # connection, polling, and device state
+services/pico.ts    # HTTP requests and response validation
+storage/settings.ts # saved Pico address
+constants/config.ts # polling and timeout values
+docs/device-api.md  # Pico W protocol
 ```
 
----
+## Device contract
 
-## 10. Networking Layer
+The Pico W must be reachable on the phone's local network and implement the protocol in [device-api.md](./device-api.md). Both endpoints return the complete current status object. Browser testing may require Pico-side CORS headers; native Android and iOS requests do not.
 
-All Pico communication should be handled inside:
+## Out of scope
 
-```text
-services/pico.ts
-```
-
-Suggested functions:
-
-```ts
-getDeviceStatus(ip)
-setTargetTemperature(ip, temperature)
-```
-
-UI components should not contain duplicated raw `fetch()` logic.
-
----
-
-## 11. Device State
-
-Use:
-
-```text
-hooks/useFreshShield.ts
-```
-
-Suggested state:
-
-```ts
-temperature
-humidity
-gasLevel
-targetTemperature
-isStockMode
-isConnected
-lastUpdated
-error
-```
-
-The hook should manage:
-
-- polling,
-- refresh,
-- connection state,
-- network errors,
-- target-temperature updates.
-
-No Redux or Zustand is required.
-
----
-
-## 12. Local Storage
-
-Use AsyncStorage for:
-
-- Pico IP address,
-- auto-connect preference,
-- simple app settings,
-- alert preferences.
-
-Do not continuously write live sensor readings to AsyncStorage.
-
-Live chart readings remain in memory for the active app session. See [device-api.md](./device-api.md) for the device protocol and chart aggregation.
-
----
-
-## 13. Error Handling
-
-The app should handle:
-
-- invalid IP address,
-- Pico offline,
-- phone on a different Wi-Fi network,
-- request timeout,
-- malformed response,
-- failed target-temperature update.
-
-Suggested user-facing states:
-
-```text
-Connecting...
-Connected
-Disconnected
-Device Not Found
-Request Failed
-```
-
----
-
-## 14. Version 1 Scope
-
-Implement first:
-
-- Connect screen
-- Dashboard
-- live sensor values
-- target-temperature control
-- connection state
-- APP/stock mode indicator
-- polling
-- saved Pico IP
-- basic settings
-
----
-
-## 15. Optional Later Features
-
-- sensor history
-- graphs
-- local notifications
-- temperature presets
-- air-quality status labels
-- reconnect improvements
-
----
-
-## 16. Out of Scope
-
-Do not add unless required by the research:
-
-- Firebase
-- Supabase
-- user accounts
-- authentication
-- cloud database
-- Node.js backend
-- remote internet control
-- Redux
-- Zustand
-- unnecessary hardware changes
-- unnecessary microservices
-
-The goal is to keep FreshShield simple, reliable, local-first, and easy to develop for a research project.
+Cloud synchronization, authentication, remote control, persistent sensor history, notifications, Redux, Zustand, and a separate backend are not part of this app.
