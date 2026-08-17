@@ -6,7 +6,19 @@ import { getPicoIp, setPicoIp } from '../storage/settings';
 import type { PicoStatus } from '../types/freshshield';
 
 const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
+const DEMO_INTERVAL_MS = 1_000;
 const DEMO_STATUS: PicoStatus = { temperature: 3.8, humidity: 76.4, gasLevel: 142, targetTemperature: 4, isStockMode: false };
+
+const getDemoStatus = (targetTemperature = DEMO_STATUS.targetTemperature): PicoStatus => {
+  const seconds = Date.now() / 1_000;
+  return {
+    temperature: 3.8 + Math.sin(seconds / 3) * 0.35,
+    humidity: 76.4 + Math.sin(seconds / 4.5) * 2.2,
+    gasLevel: Math.round(142 + Math.sin(seconds / 2.5) * 12),
+    targetTemperature,
+    isStockMode: false,
+  };
+};
 
 const messageFor = (error: unknown) =>
   error instanceof Error && error.name === 'AbortError'
@@ -24,6 +36,7 @@ export function useFreshShield() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(DEMO_MODE ? new Date() : null);
   const ipRef = useRef<string | null>(null);
+  const demoTargetRef = useRef(DEMO_STATUS.targetTemperature);
 
   const acceptStatus = useCallback((nextStatus: PicoStatus) => {
     setStatus(nextStatus);
@@ -34,7 +47,7 @@ export function useFreshShield() {
 
   const refresh = useCallback(async () => {
     if (DEMO_MODE) {
-      acceptStatus(DEMO_STATUS);
+      acceptStatus(getDemoStatus(demoTargetRef.current));
       return true;
     }
     if (!ipRef.current) return false;
@@ -64,7 +77,7 @@ export function useFreshShield() {
   useEffect(() => {
     if (!ip) return;
     void refresh();
-    const interval = setInterval(() => void refresh(), POLL_INTERVAL_MS);
+    const interval = setInterval(() => void refresh(), DEMO_MODE ? DEMO_INTERVAL_MS : POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [ip, refresh]);
 
@@ -99,8 +112,8 @@ export function useFreshShield() {
 
   const changeTargetTemperature = useCallback(async (targetTemperature: number) => {
     if (DEMO_MODE) {
-      setStatus((current) => ({ ...(current ?? DEMO_STATUS), targetTemperature }));
-      setLastUpdated(new Date());
+      demoTargetRef.current = targetTemperature;
+      acceptStatus(getDemoStatus(targetTemperature));
       return true;
     }
     if (!ipRef.current || !connected) return false;

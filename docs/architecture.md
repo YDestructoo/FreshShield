@@ -13,7 +13,6 @@ The Pico W remains responsible for the actual hardware control. The mobile app a
 - changing the target temperature,
 - showing whether the device is connected,
 - showing whether the Pico is in APP mode or stock/automatic mode,
-- optionally storing sensor history locally on the phone.
 
 No cloud backend, authentication system, or remote database is required.
 
@@ -28,11 +27,9 @@ No cloud backend, authentication system, or remote database is required.
 │                               │
 │  Connect                      │
 │  Dashboard                    │
-│  History                      │
 │  Settings                     │
 │                               │
-│  AsyncStorage                 │
-│  Optional SQLite History      │
+│  AsyncStorage (Pico IP)       │
 └───────────────┬───────────────┘
                 │
           HTTP + JSON
@@ -74,10 +71,6 @@ No cloud backend, authentication system, or remote database is required.
 - Built-in `fetch()`
 - `@expo/vector-icons`
 
-### Optional
-
-- Expo SQLite for persistent local sensor history
-- A lightweight chart library if graphs are required
 
 ### Existing Hardware
 
@@ -109,7 +102,6 @@ The mobile app should:
 5. Allow the user to set a new target temperature.
 6. Keep the app-control heartbeat active while connected.
 7. Handle connection failures without crashing.
-8. Optionally store sensor history locally.
 
 The app must not directly control the Peltier or recreate the Pico control algorithm.
 
@@ -262,19 +254,6 @@ Optional:
 
 ---
 
-### History
-
-Optional first-version feature.
-
-Can contain:
-
-- temperature history,
-- humidity history,
-- gas/air-quality history,
-- 1 hour / 6 hours / 24 hours filters.
-
-History should remain local to the phone.
-
 ---
 
 ### Settings
@@ -285,7 +264,6 @@ Contains:
 - reconnect/change IP,
 - auto-reconnect option,
 - temperature alert preferences,
-- clear history,
 - app version/about section.
 
 ---
@@ -298,7 +276,6 @@ freshshield/
 │   ├── _layout.tsx
 │   ├── index.tsx
 │   ├── dashboard.tsx
-│   ├── history.tsx
 │   └── settings.tsx
 │
 ├── components/
@@ -390,7 +367,7 @@ Use AsyncStorage for:
 
 Do not continuously write live sensor readings to AsyncStorage.
 
-If persistent sensor history is needed, use SQLite instead.
+Live chart readings remain in memory for the active app session. See [device-api.md](./device-api.md) for the device protocol and chart aggregation.
 
 ---
 

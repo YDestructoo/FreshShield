@@ -15,6 +15,7 @@ export default function SettingsScreen() {
     if (ip) setAddress(ip);
   }, [ip]);
 
+
   const reconnect = async () => {
     if (await connect(address)) router.replace('/dashboard');
   };
@@ -57,6 +58,7 @@ export default function SettingsScreen() {
             <Text className="font-poppins text-sm font-semibold text-white">{connecting ? 'Checking device…' : 'Save and reconnect'}</Text>
           </Pressable>
         </View>
+
 
         <View className="flex-row items-center gap-3 rounded-[22px] bg-[#F5DED7] p-4">
           <Ionicons name="lock-closed" size={17} color="#86574C" />
