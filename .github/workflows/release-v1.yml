@@ -1,0 +1,44 @@
+name: Publish FreshShield v1.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-v1.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: CI=1 npx expo prebuild --platform android --no-install
+      - run: ./gradlew assembleRelease --no-daemon
+        working-directory: android
+
+      - name: Prepare APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk FreshShield.apk
+
+      - name: Create v1.0 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0 FreshShield.apk \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "FreshShield v1.0" \
+            --generate-notes
