@@ -1,13 +1,15 @@
-name: Android preview APK
+name: Android APK
 
 on:
   workflow_dispatch:
   pull_request:
   push:
     branches: [main]
+    tags:
+      - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -26,8 +28,16 @@ jobs:
       - run: CI=1 npx expo prebuild --platform android --no-install
       - run: ./gradlew assembleRelease --no-daemon
         working-directory: android
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk FreshShield.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: FreshShield-preview.apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: FreshShield.apk
+          path: FreshShield.apk
           if-no-files-found: error
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FreshShield.apk
+          generate_release_notes: true
