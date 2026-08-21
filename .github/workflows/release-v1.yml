@@ -1,4 +1,4 @@
-name: Publish FreshShield v1.0.1 Fix
+name: Publish FreshShield v1.0.2 Fix
 
 on:
   push:
@@ -33,12 +33,12 @@ jobs:
       - name: Prepare APK
         run: cp android/app/build/outputs/apk/release/app-release.apk FreshShield.apk
 
-      - name: Create v1.0.1 fix release
+      - name: Create v1.0.2 fix release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0.1 FreshShield.apk \
+          gh release create v1.0.2 FreshShield.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "FreshShield v1.0.1" \
-            --notes "Fix release: allows Android cleartext HTTP connections for local FreshShield Pico W communication."
+            --title "FreshShield v1.0.2" \
+            --notes "Fix release: makes local Pico W HTTP communication work reliably on Android and fixes the dark/gray bottom navigation appearance."
