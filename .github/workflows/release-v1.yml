@@ -1,4 +1,4 @@
-name: Publish FreshShield v1.0
+name: Publish FreshShield v1.0.1 Fix
 
 on:
   push:
@@ -33,12 +33,12 @@ jobs:
       - name: Prepare APK
         run: cp android/app/build/outputs/apk/release/app-release.apk FreshShield.apk
 
-      - name: Create v1.0 release
+      - name: Create v1.0.1 fix release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v1.0 FreshShield.apk \
+          gh release create v1.0.1 FreshShield.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "FreshShield v1.0" \
-            --generate-notes
+            --title "FreshShield v1.0.1" \
+            --notes "Fix release: allows Android cleartext HTTP connections for local FreshShield Pico W communication."
