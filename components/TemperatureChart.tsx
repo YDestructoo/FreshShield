@@ -34,7 +34,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
       <View className="flex-row items-start justify-between">
         <View>
           <Text className="font-poppins text-xs font-medium text-[#BEC5C8]">Temperature timeline</Text>
-          <Text className="font-poppins mt-1 text-[11px] text-[#7F8A8F]">Fifteen-minute averages · touch and drag</Text>
+          <Text className="font-poppins mt-1 text-[11px] text-[#7F8A8F]">5min Avg · touch and drag</Text>
         </View>
         <View className="items-end">
           <Text className="font-poppins text-2xl font-semibold text-white">{values[selectedIndex].toFixed(1)}°</Text>
@@ -66,7 +66,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
 
       <View className="mt-2 flex-row justify-between px-1">
         <Text className="font-poppins text-[10px] text-[#7F8A8F]">{labels[0]}</Text>
-        <Text className="font-poppins text-[10px] text-[#7F8A8F]">15 min avg</Text>
+        <Text className="font-poppins text-[10px] text-[#7F8A8F]">5min Avg</Text>
         <Text className="font-poppins text-[10px] text-[#7F8A8F]">{labels[labels.length - 1]}</Text>
       </View>
     </View>

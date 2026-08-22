@@ -20,6 +20,7 @@ export default function RootLayout() {
         indicatorColor="#FCE1E3"
         labelStyle={{ default: { color: '#526168', fontFamily: 'Poppins_400Regular', fontSize: 10 }, selected: { color: '#F0525E', fontFamily: 'Poppins_400Regular', fontSize: 10 } }}
         minimizeBehavior="onScrollDown"
+        rippleColor="#FCE1E3"
         tabBarRespectsIMEInsets
         tintColor="#F0525E"
       >

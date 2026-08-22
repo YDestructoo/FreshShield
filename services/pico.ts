@@ -1,4 +1,4 @@
-import { REQUEST_TIMEOUT_MS } from '../constants/config';
+import { DISCOVERY_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from '../constants/config';
 import type { PicoStatus } from '../types/freshshield';
 
 function picoUrl(ip: string) {
@@ -10,7 +10,7 @@ function picoUrl(ip: string) {
   return url.origin;
 }
 
-function statusFromResponse(value: unknown): PicoStatus {
+export function parsePicoStatus(value: unknown): PicoStatus {
   if (!value || typeof value !== 'object') throw new Error('The Pico returned an invalid response.');
   const data = value as Record<string, unknown>;
   const fields = ['temperature', 'humidity', 'gas_level_raw', 'target_temp'];
@@ -34,9 +34,26 @@ async function request(ip: string, path: string, init?: RequestInit) {
   try {
     const response = await fetch(`${picoUrl(ip)}${path}`, { ...init, signal: controller.signal });
     if (!response.ok) throw new Error(`Pico request failed (${response.status}).`);
-    return statusFromResponse(await response.json());
+    return parsePicoStatus(await response.json());
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+export async function probePicoStatus(ip: string, signal?: AbortSignal): Promise<PicoStatus | null> {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(abort, DISCOVERY_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${picoUrl(ip)}/`, { signal: controller.signal });
+    return response.ok ? parsePicoStatus(await response.json()) : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
   }
 }
 
