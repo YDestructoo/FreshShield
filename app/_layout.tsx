@@ -15,7 +15,7 @@ export default function RootLayout() {
     <FreshShieldProvider>
       <StatusBar style="dark" />
       <NativeTabs
-        backgroundColor="transparent"
+        backgroundColor="#FFFFFF"
         iconColor={{ default: '#526168', selected: '#F0525E' }}
         indicatorColor="#FCE1E3"
         labelStyle={{ default: { color: '#526168', fontFamily: 'Poppins_400Regular', fontSize: 10 }, selected: { color: '#F0525E', fontFamily: 'Poppins_400Regular', fontSize: 10 } }}
