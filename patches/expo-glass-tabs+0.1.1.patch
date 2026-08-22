@@ -1,0 +1,99 @@
+diff --git a/node_modules/expo-glass-tabs/build/glass-tab-bar.js b/node_modules/expo-glass-tabs/build/glass-tab-bar.js
+index 420cb04..75ab0bf 100644
+--- a/node_modules/expo-glass-tabs/build/glass-tab-bar.js
++++ b/node_modules/expo-glass-tabs/build/glass-tab-bar.js
+@@ -8,7 +8,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+ import Animated, { Extrapolation, interpolate, interpolateColor, runOnJS, useAnimatedStyle, useSharedValue, withSpring, } from 'react-native-reanimated';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { setMinimized, useMinimizeState } from './minimize-context';
+-import { ProgressiveBlur } from './progressive-blur';
+ const AnimatedGlassView = Animated.createAnimatedComponent(GlassView);
+ const EXPANDED_HEIGHT = 58;
+ const MINIMIZED_HEIGHT = 44;
+@@ -29,7 +28,6 @@ const ITEM_PAD_V = 7;
+ const HIGHLIGHT_EXPANDED = ICON_SIZE + LABEL_BLOCK + ITEM_PAD_V * 2;
+ const HIGHLIGHT_MINIMIZED = ICON_SIZE + ITEM_PAD_V * 2;
+ /** How far the bottom progressive blur bleeds above the pill. */
+-const BLUR_BLEED = 44;
+ /**
+  * Slide spring: interruptible by design — rapid tab-hopping retargets with
+  * preserved velocity. Slight under-damping gives the pill a tiny settle,
+@@ -160,19 +158,13 @@ export function GlassTabBar({ children, onIndexSelected, theme: themeOverrides,
+     });
+     const bottomOffset = Math.max(insets.bottom - 16, 12);
+     const barContext = useMemo(() => ({ slideIndex, isDragging, theme }), [slideIndex, isDragging, theme]);
+-    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [_jsx(ProgressiveBlur, { direction: "bottom", style: {
+-                    position: 'absolute',
+-                    left: 0,
+-                    right: 0,
+-                    bottom: 0,
+-                    height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
+-                } }), _jsx(View, { pointerEvents: "box-none", style: { marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }, children: _jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: barStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
++    return (_jsxs(View, { ...props, pointerEvents: "box-none", style: { position: 'absolute', left: 0, right: 0, bottom: 0 }, children: [_jsx(View, { pointerEvents: "box-none", style: { marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }, children: _jsx(GestureDetector, { gesture: gesture, children: _jsxs(Animated.View, { style: barStyle, children: [isLiquidGlassAvailable() ? (_jsx(AnimatedGlassView, { glassEffectStyle: "regular", style: [
+                                     StyleSheet.absoluteFill,
+-                                    { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
++                                    { backgroundColor: theme.glassTint, borderColor: '#E3E8EB', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+                                     shapeStyle,
+                                 ] })) : (_jsx(Animated.View, { style: [
+                                     StyleSheet.absoluteFill,
+-                                    { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
++                                    { backgroundColor: theme.solidFallback, borderColor: '#E3E8EB', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+                                     shapeStyle,
+                                 ] })), _jsx(Animated.View, { style: [
+                                     {
+diff --git a/node_modules/expo-glass-tabs/src/glass-tab-bar.tsx b/node_modules/expo-glass-tabs/src/glass-tab-bar.tsx
+index c0f798b..35b1214 100644
+--- a/node_modules/expo-glass-tabs/src/glass-tab-bar.tsx
++++ b/node_modules/expo-glass-tabs/src/glass-tab-bar.tsx
+@@ -26,7 +26,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import type { TabListProps, TabTriggerSlotProps } from 'expo-router/ui';
+ 
+ import { MINIMIZE_SPRING, setMinimized, useMinimizeState } from './minimize-context';
+-import { ProgressiveBlur } from './progressive-blur';
+ 
+ const AnimatedGlassView = Animated.createAnimatedComponent(GlassView);
+ 
+@@ -49,7 +48,6 @@ const ITEM_PAD_V = 7;
+ const HIGHLIGHT_EXPANDED = ICON_SIZE + LABEL_BLOCK + ITEM_PAD_V * 2;
+ const HIGHLIGHT_MINIMIZED = ICON_SIZE + ITEM_PAD_V * 2;
+ /** How far the bottom progressive blur bleeds above the pill. */
+-const BLUR_BLEED = 44;
+ 
+ /**
+  * Slide spring: interruptible by design — rapid tab-hopping retargets with
+@@ -269,17 +267,6 @@ export function GlassTabBar({
+       {...props}
+       pointerEvents="box-none"
+       style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+-      {/* Progressive blur rising from the screen's bottom edge behind the pill. */}
+-      <ProgressiveBlur
+-        direction="bottom"
+-        style={{
+-          position: 'absolute',
+-          left: 0,
+-          right: 0,
+-          bottom: 0,
+-          height: bottomOffset + EXPANDED_HEIGHT + BLUR_BLEED,
+-        }}
+-      />
+       <View
+         pointerEvents="box-none"
+         style={{ marginHorizontal: BAR_MARGIN, marginBottom: bottomOffset }}>
+@@ -290,7 +277,7 @@ export function GlassTabBar({
+                 glassEffectStyle="regular"
+                 style={[
+                   StyleSheet.absoluteFill,
+-                  { backgroundColor: theme.glassTint, borderCurve: 'continuous' },
++                  { backgroundColor: theme.glassTint, borderColor: '#E3E8EB', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+                   shapeStyle,
+                 ]}
+               />
+@@ -298,7 +285,7 @@ export function GlassTabBar({
+               <Animated.View
+                 style={[
+                   StyleSheet.absoluteFill,
+-                  { backgroundColor: theme.solidFallback, borderCurve: 'continuous' },
++                  { backgroundColor: theme.solidFallback, borderColor: '#E3E8EB', borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth },
+                   shapeStyle,
+                 ]}
+               />

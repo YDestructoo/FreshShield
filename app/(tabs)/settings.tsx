@@ -1,17 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Switch, Text, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { ConnectionStatus } from '../components/ConnectionStatus';
-import { ScreenContainer } from '../components/ScreenContainer';
-import { useFreshShield } from '../hooks/useFreshShield';
-import { usePicoDiscovery } from '../hooks/usePicoDiscovery';
+import { useMinimizeOnScroll } from 'expo-glass-tabs';
+
+import { ConnectionStatus } from '../../components/ConnectionStatus';
+import { ScreenContainer } from '../../components/ScreenContainer';
+import { useFreshShield } from '../../hooks/useFreshShield';
+import { usePicoDiscovery } from '../../hooks/usePicoDiscovery';
 
 export default function SettingsScreen() {
   const { ip, connected, connecting, error, connect, disconnect, moldSettings, updateMoldSettings } = useFreshShield();
   const [address, setAddress] = useState('');
   const { devices, scanning, error: discoveryError, scan } = usePicoDiscovery();
+  const onScroll = useMinimizeOnScroll();
 
   useEffect(() => {
     if (ip) setAddress(ip);
@@ -19,13 +23,13 @@ export default function SettingsScreen() {
   useEffect(() => { void scan(); }, [scan]);
 
   const useDevice = async (nextAddress: string) => {
-    if (await connect(nextAddress)) router.replace('/dashboard');
+    if (await connect(nextAddress)) router.replace('/');
   };
   const reconnect = () => useDevice(address);
 
   return (
     <ScreenContainer>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-4 pb-4 pt-4">
+      <Animated.ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="gap-4 pb-[120px] pt-4" onScroll={onScroll} scrollEventThrottle={16}>
         <View className="px-1">
           <Text className="font-poppins text-xs text-[#657178]">FreshShield</Text>
           <Text className="font-poppins text-2xl font-semibold tracking-[-0.8px] text-[#111719]">Settings</Text>
@@ -90,7 +94,7 @@ export default function SettingsScreen() {
           <Ionicons name="lock-closed" size={17} color="#86574C" />
           <Text className="font-poppins flex-1 text-xs leading-5 text-[#72534B]">Local Wi-Fi only. FreshShield does not require a cloud account.</Text>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </ScreenContainer>
   );
 }

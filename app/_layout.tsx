@@ -1,8 +1,9 @@
 import '../global.css';
 
 import { Poppins_400Regular, useFonts } from '@expo-google-fonts/poppins';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { FreshShieldProvider } from '../hooks/useFreshShield';
 
@@ -12,27 +13,11 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <FreshShieldProvider>
-      <StatusBar style="dark" />
-      <NativeTabs
-        backgroundColor="#FFFFFF"
-        iconColor={{ default: '#526168', selected: '#F0525E' }}
-        indicatorColor="#FCE1E3"
-        labelStyle={{ default: { color: '#526168', fontFamily: 'Poppins_400Regular', fontSize: 10 }, selected: { color: '#F0525E', fontFamily: 'Poppins_400Regular', fontSize: 10 } }}
-        minimizeBehavior="onScrollDown"
-        rippleColor="#FCE1E3"
-        tabBarRespectsIMEInsets
-        tintColor="#F0525E"
-      >
-        <NativeTabs.Trigger name="dashboard">
-          <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md={{ default: 'home', selected: 'home_filled' }} />
-          <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="settings">
-          <NativeTabs.Trigger.Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} md="settings" />
-          <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
-        </NativeTabs.Trigger>
-      </NativeTabs>
-    </FreshShieldProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <FreshShieldProvider>
+        <StatusBar style="dark" />
+        <Slot />
+      </FreshShieldProvider>
+    </GestureHandlerRootView>
   );
 }
