@@ -1,0 +1,27 @@
+name: Trigger FreshShield v2.0 Release
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v2-now.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    if: github.event.head_commit.message == 'chore: trigger FreshShield v2.0 release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create v2.0 tag on UI release commit
+        env:
+          TARGET_SHA: a0bb052e7e481b555d6cbb205edb59115edb05fe
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a v2.0 "$TARGET_SHA" -m "FreshShield v2.0"
+          git push origin v2.0
